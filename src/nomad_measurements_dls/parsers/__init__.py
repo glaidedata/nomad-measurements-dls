@@ -1,18 +1,15 @@
 from nomad.config.models.plugins import ParserEntryPoint
-from pydantic import Field
 
 
-class NewParserEntryPoint(ParserEntryPoint):
-    parameter: int = Field(0, description='Custom configuration parameter')
-
+class DLSParserEntryPoint(ParserEntryPoint):
     def load(self):
-        from nomad_measurements_dls.parsers.parser import NewParser
+        from nomad_measurements_dls.parsers.parser import DLSParser
 
-        return NewParser(**self.model_dump())
+        return DLSParser(**self.dict())
 
 
-parser_entry_point = NewParserEntryPoint(
-    name='NewParser',
-    description='New parser entry point configuration.',
-    mainfile_name_re=r'.*\.newmainfilename',
+parser_entry_point = DLSParserEntryPoint(
+    name='DLSParser',
+    description='Parser for Dynamic Light Scattering (DLS) measurement files.',
+    mainfile_name_re=r'.*\.zmes$',
 )
