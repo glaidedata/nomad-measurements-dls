@@ -1,13 +1,10 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
-from ientrance_instruments.schema_packages.schema_package import IEntranceInstrument
 from nomad.datamodel.data import JSON, ArchiveSection, EntryData
 from nomad.datamodel.metainfo.annotations import ELNComponentEnum
 from nomad.datamodel.metainfo.basesections import Measurement, MeasurementResult
 from nomad.metainfo import Quantity, SchemaPackage, Section, SubSection
-
 from readers_ientrance.zmes_reader import read_zmes
 
 if TYPE_CHECKING:
@@ -26,12 +23,10 @@ class DLSInstrumentSetup(ArchiveSection):
     scattering_angle = Quantity(
         type=np.float64,
         unit='deg',
-        description='The angle at which scattered light is collected.'
+        description='The angle at which scattered light is collected.',
     )
     wavelength = Quantity(
-        type=np.float64,
-        unit='nm',
-        description='Wavelength of the excitation laser.'
+        type=np.float64, unit='nm', description='Wavelength of the excitation laser.'
     )
 
 
@@ -60,7 +55,7 @@ class DLSData(ArchiveSection):
                 x='size_classes',
                 y='intensity_distribution',
                 lines=[dict(mode='lines', line=dict(color='red'))],
-            )
+            ),
         ]
     )
 
@@ -87,17 +82,25 @@ class DLSData(ArchiveSection):
 
     # --- Core Arrays ---
     correlation_lag_times = Quantity(
-        type=np.float64, shape=['*'], unit='s', description='Lag times for the correlation function.'
+        type=np.float64,
+        shape=['*'],
+        unit='s',
+        description='Lag times for the correlation function.',
     )
     correlation_data = Quantity(
         type=np.float64, shape=['*'], description='The correlation coefficients.'
     )
 
     size_classes = Quantity(
-        type=np.float64, shape=['*'], unit='nm', description='Particle diameter bins for size distributions.'
+        type=np.float64,
+        shape=['*'],
+        unit='nm',
+        description='Particle diameter bins for size distributions.',
     )
     intensity_distribution = Quantity(
-        type=np.float64, shape=['*'], description='Particle size intensity distribution.'
+        type=np.float64,
+        shape=['*'],
+        description='Particle size intensity distribution.',
     )
     volume_distribution = Quantity(
         type=np.float64, shape=['*'], description='Particle size volume distribution.'
@@ -110,12 +113,15 @@ class DLSData(ArchiveSection):
         type=np.float64, shape=['*'], unit='mV', description='Zeta potential bins.'
     )
     zeta_potential_distribution = Quantity(
-        type=np.float64, shape=['*'], description='Zeta potential distribution intensities.'
+        type=np.float64,
+        shape=['*'],
+        description='Zeta potential distribution intensities.',
     )
 
 
 class DLSResult(MeasurementResult):
     """Holds the data subsection for a single run in the batch."""
+
     data = SubSection(section_def=DLSData)
 
 
@@ -125,7 +131,7 @@ class DLSResult(MeasurementResult):
 class BaseDynamicLightScattering(Measurement):
     """Base class containing shared attributes for all DLS entries."""
 
-    #_instrument_schema_preload = Quantity(type=IEntranceInstrument)
+    # _instrument_schema_preload = Quantity(type=IEntranceInstrument)
 
     data_file = Quantity(
         type=str,
@@ -187,23 +193,27 @@ class ELNMalvernZmes(BaseDynamicLightScattering, EntryData):
             # 2. Extract data using the custom zmes_reader
             zmes_data = read_zmes(file_path)
 
-            if "extraction_error" in zmes_data.metadata:
-                logger.warning(f"ZMES Reader Warning: {zmes_data.metadata['extraction_error']}")
+            if 'extraction_error' in zmes_data.metadata:
+                logger.warning(
+                    f'ZMES Reader Warning: {zmes_data.metadata["extraction_error"]}'
+                )
 
             self._init_subsections()
 
             # 3. Map Top-Level Metadata (Extracting from the first record as a representative)
             if zmes_data.records:
                 first_record = list(zmes_data.records.values())[0]
-                self.instrument_model = "Malvern Zetasizer"
-                self.software_version = str(first_record.metadata.get("Software Version", "Unknown"))
+                self.instrument_model = 'Malvern Zetasizer'
+                self.software_version = str(
+                    first_record.metadata.get('Software Version', 'Unknown')
+                )
 
-                angle = first_record.metadata.get("Scattering Collection Angle (°)")
+                angle = first_record.metadata.get('Scattering Collection Angle (°)')
                 if angle is not None:
                     self.instrument_setup.scattering_angle = float(angle)
 
             self.raw_metadata = zmes_data.metadata
-            self.results = [] # Clear existing results to prevent duplication on re-saving
+            self.results = []  # Clear existing results to prevent duplication on re-saving
 
             # 4. Iterate through the batch and map each measurement run
             for record_name, record in zmes_data.records.items():
@@ -214,14 +224,16 @@ class ELNMalvernZmes(BaseDynamicLightScattering, EntryData):
 
                 # Determine measurement type based on which arrays are present
                 if record.correlation_data is not None:
-                    data_section.measurement_type = "Size (DLS)"
+                    data_section.measurement_type = 'Size (DLS)'
                 elif record.zeta_potential_distribution is not None:
-                    data_section.measurement_type = "Zeta Potential"
+                    data_section.measurement_type = 'Zeta Potential'
                 else:
-                    data_section.measurement_type = "Other"
+                    data_section.measurement_type = 'Other'
 
                 # Extract specific useful metadata
-                temp = record.metadata.get("Temperature (°C)") or record.metadata.get("Temperature")
+                temp = record.metadata.get('Temperature (°C)') or record.metadata.get(
+                    'Temperature'
+                )
                 if temp is not None:
                     data_section.temperature = float(temp)
 
@@ -235,7 +247,9 @@ class ELNMalvernZmes(BaseDynamicLightScattering, EntryData):
                 data_section.volume_distribution = record.volume_distribution
                 data_section.number_distribution = record.number_distribution
                 data_section.zeta_potentials_x = record.zeta_potentials_x
-                data_section.zeta_potential_distribution = record.zeta_potential_distribution
+                data_section.zeta_potential_distribution = (
+                    record.zeta_potential_distribution
+                )
 
                 result_section.data = data_section
                 self.results.append(result_section)
