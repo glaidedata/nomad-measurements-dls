@@ -10,7 +10,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    
+
 ]
 name = "nomad-measurements-dls"
 description = "NOMAD measurements plugin for Dynamic Light Scattering and Zeta Potential"
@@ -25,7 +25,10 @@ maintainers = [
 ]
 license = { file = "LICENSE" }
 dependencies = [
-    "nomad-lab>=1.4.1"
+    "nomad-lab>=1.4.1",
+    "nomad-measurements",
+    "ientrance-instruments @ git+https://github.com/glaidedata/nomad-ientrance-instruments.git@v0.1.2",
+    "readers-ientrance @ git+https://github.com/glaidedata/readers-ientrance.git@v0.7.0"
 ]
 
 [project.urls]
@@ -47,7 +50,7 @@ dev = [
 extra-index-url = [
   "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple",
 ]
-    
+
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
